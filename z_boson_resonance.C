@@ -8,33 +8,32 @@
 
 void z_boson_resonance() {
 
-    // Abrir archivo ROOT
+  
    TFile *file = TFile::Open(
     "/mnt/c/Users/jonat/Downloads/ODEO_FEB2025_v0_2to4lep_data15_periodD.2to4lep.root"
 );
 
 
     if (!file || file->IsZombie()) {
-        Error("z_boson_resonance", "No se pudo abrir el archivo");
+        Error("z_boson_resonance", "can't open file");
         return;
     }
 
-    // Obtener el TTree
+  
     TTree *tree = (TTree*) file->Get("analysis");
 
     if (!tree) {
-        Error("z_boson_resonance", "No se encontró el TTree 'analysis'");
+        Error("z_boson_resonance", "file not found");
         return;
     }
 
-    // Histograma de masa invariante
+    
     TH1F *h_mll = new TH1F(
         "h_mll",
         "Z #rightarrow l^{+}l^{-}; m_{ll} [GeV]; Events",
         100, 60, 120
     );
 
-    // Variables
     int lep_n;
     ROOT::VecOps::RVec<float> *lep_pt = nullptr;
     ROOT::VecOps::RVec<float> *lep_eta = nullptr;
@@ -43,7 +42,7 @@ void z_boson_resonance() {
     ROOT::VecOps::RVec<bool>  *lep_isTightIso = nullptr;
     ROOT::VecOps::RVec<bool>  *lep_isTrigMatched = nullptr;
 
-    // Branches
+    
     tree->SetBranchAddress("lep_n", &lep_n);
     tree->SetBranchAddress("lep_pt", &lep_pt);
     tree->SetBranchAddress("lep_eta", &lep_eta);
@@ -52,7 +51,6 @@ void z_boson_resonance() {
     tree->SetBranchAddress("lep_isTightIso", &lep_isTightIso);
     tree->SetBranchAddress("lep_isTrigMatched", &lep_isTrigMatched);
 
-    // Loop de eventos
     Long64_t nentries = tree->GetEntries();
     for (Long64_t i = 0; i < nentries; i++) {
         tree->GetEntry(i);
@@ -64,7 +62,7 @@ void z_boson_resonance() {
 
         if (!(lep_isTrigMatched->at(0) || lep_isTrigMatched->at(1))) continue;
 
-        // mismo sabor (ee o μμ)
+        
         if (lep_type->at(0) != lep_type->at(1)) continue;
 
         float deta = lep_eta->at(0) - lep_eta->at(1);
@@ -81,10 +79,10 @@ void z_boson_resonance() {
         h_mll->Fill(mll);
     }
 
-    // Dibujar histograma
+    
     h_mll->Draw();
 
-    // Ajuste Voigt (Breit–Wigner convolucionada con Gauss)
+    
     TF1 *f_voigt = new TF1(
         "f_voigt",
         "[0]*TMath::Voigt(x-[1],[2],[3])",
@@ -99,3 +97,4 @@ void z_boson_resonance() {
     h_mll->Fit(f_voigt, "R");
     f_voigt->Draw("same");
 }
+
